@@ -3,9 +3,9 @@ import auth from "../middleware/auth.js";
 import { body } from "express-validator";
 import {
   getAllUsers,
-  getOwnProfile,
-  updateOwnProfile,
-  deleteOwnAccount,
+  getUserProfileById,
+  updateUserProfileById,
+  deleteUserAccountById,
 } from "../controllers/user.controller.js";
 
 const router = express.Router();
@@ -13,19 +13,19 @@ const router = express.Router();
 // Admin only
 router.get("/", auth, getAllUsers);
 
-// Current user's routes
-router.get("/me", auth, getOwnProfile);
+// Access, update, delete user profile by id (admin or user)
+router.get("/me", auth, getUserProfileById);
 
 router.patch(
-  "/me",
+  "/me/:id",
   auth,
   [
     body("name").optional().notEmpty().withMessage("Name cannot be empty"),
     body("phone").optional().isMobilePhone().withMessage("Invalid phone"),
   ],
-  updateOwnProfile
+  updateUserProfileById
 );
 
-router.delete("/me", auth, deleteOwnAccount);
+router.delete("/me/:id", auth, deleteUserAccountById);
 
 export default router;

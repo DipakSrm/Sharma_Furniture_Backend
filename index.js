@@ -21,7 +21,13 @@ app.use(cookieParser());
 configDotenv();
 
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:8080", // Frontend origin
+    credentials: true, // Allow cookies
+  })
+);
+
 app.use(helmet());
 app.use(express.urlencoded({ extended: true }));
 

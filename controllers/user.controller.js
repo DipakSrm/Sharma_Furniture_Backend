@@ -15,27 +15,47 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-// @desc    Get own profile
-export const getOwnProfile = async (req, res) => {
+export const getUserProfileById = async (req, res) => {
   try {
-    res.status(200).json({ data: req.user });
+    const user = req.user; // This is set by the auth middleware
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Optionally exclude sensitive fields
+    const { passwordHash, ...userData } = user.toObject();
+    res.json({ user: userData });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// @desc    Update own profile
-export const updateOwnProfile = async (req, res) => {
+
+// @desc    Update user profile by ID (admin or own)
+export const updateUserProfileById = async (req, res) => {
   try {
+    const { id } = req.params;
+
+    // Check if requester is admin or the same user
+    if (req.user.role !== "admin" && req.user._id.toString() !== id) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     const errors = validationResult(req);
     if (!errors.isEmpty())
       return res.status(400).json({ errors: errors.array() });
 
-    const updates = { name: req.body.name, phone: req.body.phone };
-    const user = await User.findByIdAndUpdate(req.user._id, updates, {
+    const updates = {};
+    if (req.body.name !== undefined) updates.name = req.body.name;
+    if (req.body.phone !== undefined) updates.phone = req.body.phone;
+
+    const user = await User.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
     });
+
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     res.status(200).json({ message: "Profile updated", data: user });
   } catch (error) {
@@ -43,15 +63,25 @@ export const updateOwnProfile = async (req, res) => {
   }
 };
 
-// @desc    Delete own account
-export const deleteOwnAccount = async (req, res) => {
+// @desc    Delete user account by ID (admin or own)
+export const deleteUserAccountById = async (req, res) => {
   try {
-    const user = req.user;
+    const { id } = req.params;
 
-    // Cleanup if user is a doctor
+    // Check if requester is admin or the same user
+    if (req.user.role !== "admin" && req.user._id.toString() !== id) {
+      return res.status(403).json({ message: "Access denied" });
+    }
 
-    await User.findByIdAndDelete(user._id);
-    res.clearCookie("token");
+    const user = await User.findByIdAndDelete(id);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Optional: Clear cookie only if deleting own account
+    if (req.user._id.toString() === id) {
+      res.clearCookie("token");
+    }
+
     res.status(200).json({ message: "Account deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });

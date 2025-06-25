@@ -1,17 +1,18 @@
 import multer from "multer";
-import fs from 'fs'
+import fs from "fs/promises";
 import path from "path";
-const uploadDir = "../tmp/";
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+
+// Define the temporary upload directory
+const uploadDir = path.join(process.cwd(), "./temp");
+
+// Multer storage configuration
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    const tempDir = path.join(process.cwd(), "temp/");
     try {
-      await fs.mkdir(tempDir, { recursive: true });
-      console.log(`Multer saving to: ${tempDir}`);
-      cb(null, tempDir);
+      // Ensure the upload directory exists
+      await fs.mkdir(uploadDir, { recursive: true });
+      console.log(`Multer saving to: ${uploadDir}`);
+      cb(null, uploadDir);
     } catch (err) {
       console.error(`Multer destination error: ${err.message}`);
       cb(err);
@@ -26,5 +27,4 @@ const storage = multer.diskStorage({
   },
 });
 
-export const upload = multer({ storage: storage });
-
+export const upload = multer({ storage });

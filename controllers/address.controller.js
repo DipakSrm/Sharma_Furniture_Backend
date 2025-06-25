@@ -27,26 +27,18 @@ export const getAddressById = async (req, res) => {
 // Create new address for logged-in user
 export const createAddress = async (req, res) => {
   try {
-    const { name, phone, addressLine, city, postalCode, country, isDefault } =
+    const {  addressLine, city, postalCode, state } =
       req.body;
 
     // If isDefault is true, unset default from other addresses of user
-    if (isDefault) {
-      await Address.updateMany(
-        { userId: req.user._id, isDefault: true },
-        { isDefault: false }
-      );
-    }
+
 
     const address = await Address.create({
       userId: req.user._id,
-      name,
-      phone,
       addressLine,
       city,
       postalCode,
-      country,
-      isDefault: !!isDefault,
+      state
     });
 
     res.status(201).json({ message: "Address created", data: address });
@@ -58,14 +50,7 @@ export const createAddress = async (req, res) => {
 // Update address by ID (only own address)
 export const updateAddress = async (req, res) => {
   try {
-    const { isDefault } = req.body;
-
-    if (isDefault) {
-      await Address.updateMany(
-        { userId: req.user._id, isDefault: true },
-        { isDefault: false }
-      );
-    }
+  
 
     const address = await Address.findOneAndUpdate(
       { _id: req.params.id, userId: req.user._id },

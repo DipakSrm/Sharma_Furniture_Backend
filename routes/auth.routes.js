@@ -9,6 +9,7 @@ router.post(
   [
     body("email").isEmail(),
     body("role").notEmpty(),
+    body("name").notEmpty(),
     body("password").notEmpty(),
   ],
   (req, res, next) => {

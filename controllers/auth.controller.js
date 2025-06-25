@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 
 export const register = async (req, res) => {
   try {
-    const {  email, role, password } = req.body;
+    const { email, role, password, name } = req.body;
 
     if (role === "admin")
       return res.status(400).json({ message: "Cannot register as admin" });
@@ -11,21 +11,23 @@ export const register = async (req, res) => {
     const exists = await User.findOne({ email });
     if (exists) return res.status(400).json({ message: "User already exists" });
 
-    const user = new User({ email, passwordHash: password, role });
+    const user = new User({ email, passwordHash: password, role, name });
     await user.save();
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: "2d",
     });
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 2 * 24 * 60 * 60 * 1000, // 2 days
+    res.status(201).json({
+      message: "Registration successful",
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
     });
-
-    res.status(201).json({ message: "Registration successful", user });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -45,14 +47,16 @@ export const login = async (req, res) => {
       expiresIn: "2d",
     });
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 2 * 24 * 60 * 60 * 1000,
+    res.json({
+      message: "Login successful",
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
     });
-
-    res.json({ message: "Login successful", user });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

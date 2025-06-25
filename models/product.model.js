@@ -3,7 +3,13 @@ const productSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   slug: { type: String, required: true, unique: true, trim: true },
   description: { type: String, required: true },
-  brand: { type: String, trim: true },
+  features: { type: [String], required: true },
+  dimensions: {
+    length: { type: Number, required: true, min: 0 },
+    width: { type: Number, required: true, min: 0 },
+    height: { type: Number, required: true, min: 0 },
+  },
+  materials: { type: [String], required: true },
   categoryId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Category",
@@ -13,7 +19,6 @@ const productSchema = new mongoose.Schema({
   price: { type: Number, required: true, min: 0 },
   previousPrice: { type: Number, min: 0 },
   stock: { type: Number, required: true, min: 0 },
-  variants: [{ color: String, size: String, stock: Number }],
   images: [{ type: String }],
   tags: [{ type: String }],
   isFeatured: { type: Boolean, default: false },
