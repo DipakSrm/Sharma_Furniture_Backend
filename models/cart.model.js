@@ -12,6 +12,7 @@ const cartSchema = new mongoose.Schema({
       quantity: { type: Number, required: true, min: 1 },
     },
   ],
+  total:{type: Number, default: 0},
   updatedAt: { type: Date, default: Date.now },
 });
 

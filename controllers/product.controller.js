@@ -1,3 +1,4 @@
+import { features } from "process";
 import { Product } from "../models/product.model.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 import fs from "fs/promises";
@@ -184,12 +185,11 @@ export const searchAndFilterProducts = async (req, res) => {
 
     // Search by product name (case-insensitive)
     if (search) {
-      matchConditions.name = {
-        $regex: search,
-        $options: "i",
-      };
+      matchConditions.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
     }
-
     // Filter by category name
     if (category) {
       matchConditions["category.name"] = {
