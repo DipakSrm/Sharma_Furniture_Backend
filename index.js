@@ -14,7 +14,7 @@ import searchLogsRoutes from "./routes/searchlogs.routes.js"
 import reviewRoutes from "./routes/reviews.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
-
+import khaltiRoutes from "./routes/khalti.routes.js";
 
 const app = express();
 app.use(cookieParser());
@@ -23,8 +23,9 @@ configDotenv();
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:8080", // Frontend origin
-    credentials: true, // Allow cookies
+    origin:
+      "*",
+    credentials: false, // Allow cookies
   })
 );
 
@@ -46,6 +47,8 @@ app.use("/api/v1/searchlogs", searchLogsRoutes);
 app.use("/api/v1/reviews", reviewRoutes);
 app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/categories", categoryRoutes);
+app.use("/api/v1/payment", khaltiRoutes);
+
 
 
 

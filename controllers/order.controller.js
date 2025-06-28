@@ -1,22 +1,72 @@
+import axios from "axios";
 import { Order } from "../models/order.model.js";
-
+import {Product} from "../models/product.model.js";
 // Create new order (user only)
 export const createOrder = async (req, res) => {
   try {
-    const { items, totalAmount, shippingAddress, paymentMethod } = req.body;
-
+    const {
+      items,
+      totalAmount,
+      paymentStatus,
+      shippingAddress,
+      paymentMethod,
+    } = req.body;
+let TotalAmountAccumulated = 0;
     if (!items || items.length === 0)
       return res.status(400).json({ message: "Order items required" });
 
-    if (!totalAmount || !paymentMethod)
+if (
+  paymentMethod === "Khalti" &&
+  paymentStatus &&
+  paymentStatus == "completed" 
+) {
+  return res.status(400).json({ message: "Invalid Payment Status " });
+}
+
+for (const item of items) {
+      const { productId, quantity } = item;
+      if (!productId || !quantity)
+        return res.status(400).json({ message: "Product ID and quantity required" });
+      // Check if product exists and has enough stock
+      const product = await Product
+        .findById(productId)
+        .select("stock");
+      console.log(product);
+      if (!product)
+        return res.status(404).json({ message: "Product not found" });
+      if (product.stock < quantity)
+        return res.status(400).json({ message: `Insufficient stock for product ${productId}` });
+      // Check if product stock is sufficient
+    }
+
+for (const item of items) {
+  const { productId, quantity } = item;
+  const product = await Product.findById(productId);
+  if (product) {
+    TotalAmountAccumulated += product.price * quantity;
+    
+  } 
+}
+
+const calculatedTotal = parseFloat((TotalAmountAccumulated * 1.13).toFixed(2));
+const clientTotal = parseFloat(parseFloat(totalAmount).toFixed(2));
+
+if (calculatedTotal !== clientTotal) {
+  return res
+    .status(400)
+    .json({ message: "Total amount does not match the calculated amount" });
+}
+
+
+    if (!totalAmount || !paymentMethod || !shippingAddress)
       return res
         .status(400)
-        .json({ message: "Total amount and payment method required" });
+        .json({ message: "Total amount and payment method required and Shipping Address required" });
 
     const order = await Order.create({
       userId: req.user._id,
       items,
-      totalAmount,
+      totalAmount: TotalAmountAccumulated*1.13,
       shippingAddress,
       paymentMethod,
     });
@@ -30,7 +80,7 @@ export const createOrder = async (req, res) => {
 // Get all orders of logged-in user (order history)
 export const getUserOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ userId: req.user._id }).sort({
+    const orders = await Order.find({ userId: req.user._id }).populate("items.productId").sort({
       placedAt: -1,
     });
     res.json({ data: orders });
@@ -42,7 +92,7 @@ export const getUserOrders = async (req, res) => {
 // Get order by ID (user can only access own order, admin any)
 export const getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate("items.productId");
 
     if (!order) return res.status(404).json({ message: "Order not found" });
 
@@ -110,7 +160,49 @@ export const updateOrderStatus = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+export const updatePaymentStatus = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+const paymentToken = req.body.paymentToken;
+console.log("Payment Token Received:", paymentToken);
+    if (order.userId.toString() !== req.user._id.toString())
+      return res.status(403).json({ message: "Access denied" });
 
+
+if(order.paymentToken !== paymentToken) {
+  return res.status(400).json({ message: "Invalid payment token" });
+}
+
+try {
+  const khaltiResponse = await axios.post(
+    "https://dev.khalti.com/api/v2/epayment/lookup/",
+    {
+      pidx:paymentToken
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Key 586a82b6520247829bb345194b8cbd00`,
+      },
+    }
+  );
+  if(khaltiResponse.status === 200 && khaltiResponse.data.status === "Completed") {
+    console.log("Khalti Payment Confirmed Successfully",khaltiResponse.data);
+    order.paymentStatus = "completed";
+    await order.save();
+    res.json({ message: "Order status updated", data: order });
+  
+  }
+} catch (error) {
+  console.log("Error in payment confirmation update", error);
+  res.status(500).json({ message: "Payment confirmation failed" });
+}
+
+
+} catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 // User cancel own order (only if pending or processing)
 export const cancelOrder = async (req, res) => {
   try {

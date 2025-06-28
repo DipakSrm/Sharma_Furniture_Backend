@@ -1,8 +1,24 @@
 import { Category } from "../models/category.model.js";
-
+import { Product } from "../models/product.model.js";
 export const getAllCategories = async (req, res) => {
   try {
+
     const categories = await Category.find();
+    if (!categories || categories.length === 0)
+      return res.status(404).json({ message: "No categories found" });
+for(const category of categories){
+  const products = await Product.find({ categoryId: category._id });
+  if(products && products.length<0) return 
+   await Category.findByIdAndUpdate(
+    category._id,
+    { ref_image: products[0].images[0], count: products.length },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+}
+
     res.json({ data: categories });
   } catch (error) {
     res.status(500).json({ message: error.message });

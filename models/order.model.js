@@ -26,7 +26,13 @@ const orderSchema = new mongoose.Schema({
     postalCode: String,
     country: String,
   },
-  paymentMethod: { type: String, required: true },
+  paymentMethod: { type: String, required: true, enum: ["COD", "Khalti"],default:"COD" },
+  paymentStatus: {
+    type: String,
+    enum: ["pending", "completed", "failed"],
+    default: "pending",
+  },
+  paymentToken:{type: String, default: null}, //for khalti payment confirmation
   placedAt: { type: Date, default: Date.now },
   deliveredAt: Date,
 });

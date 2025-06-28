@@ -7,6 +7,7 @@ import {
   getAllOrders,
   updateOrderStatus,
   cancelOrder,
+  updatePaymentStatus,
 } from "../controllers/order.controller.js";
 
 const router = express.Router();
@@ -27,6 +28,8 @@ router.get("/:id", getOrderById);
 
 // Admin update order status
 router.patch("/:id/status", updateOrderStatus);
+router.patch("/:id/payment", updatePaymentStatus);
+
 
 // Users can cancel their own orders if needed
 router.patch("/:id/cancel", cancelOrder);
