@@ -9,7 +9,7 @@ import userRoutes from "./routes/user.routes.js"
 import addressRoutes from "./routes/address.routes.js"
 import cartRoutes from "./routes/cart.routes.js"
 import productRoutes from "./routes/product.routes.js"
-import subCategoryRoutes from "./routes/subCategory.routes.js"
+import subCategoryRoutes from "./routes/subcategory.routes.js"
 import searchLogsRoutes from "./routes/searchlogs.routes.js"
 import reviewRoutes from "./routes/reviews.routes.js";
 import orderRoutes from "./routes/order.routes.js";
